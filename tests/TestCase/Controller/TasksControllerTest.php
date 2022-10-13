@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Test\TestCase\Controller;
 
 use App\Model\Entity\Task;
@@ -62,7 +63,7 @@ class TasksControllerTest extends TestCase
         $task = $query->toArray()[0];
 
         // проверим, что все переданные данные сохранились
-        foreach( $data as $key=>$value){
+        foreach ($data as $key => $value) {
             $this->assertEquals($value, $task->$key);
         }
 
@@ -73,7 +74,6 @@ class TasksControllerTest extends TestCase
         // проверим, что пользователь подставился как автор.
         $this->assertEquals($userId, $task->author_id, 'Incorrect Author autoselect');
     }
-
 
 
     /**
@@ -121,29 +121,24 @@ class TasksControllerTest extends TestCase
     {
         $editUrl = '/tasks/edit/';
 
-        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
         $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
         $users = $usersTable->find();
 
-        foreach ($users as $user){
+        foreach ($users as $user) {
             $userId = $user->id;
             $this->login($userId);
 
-            $allowedTasks = $tasksTable->find()->where(['OR' => [['author_id' => $userId], ['executor_id' => $userId]]]);
-            foreach ($allowedTasks as $allowedTask) {
-                $this->get($editUrl.$allowedTask->id);
-                $this->assertResponseOk();
-            }
+            $tasks = $tasksTable->find();
+            foreach ($tasks as $task) {
+                $this->get($editUrl . $task->id);
+                if ($task->author_id === $userId || $task->executor_id === $userId) {
+                    $this->assertResponseOk();
+                } else {
+                    $this->assertResponseCode(403);
+                    $this->assertResponseContains('Forbidden');
+                }
 
-            $forbiddenTasks = $tasksTable->find()
-                ->where(['tasks.author_id != :author_id AND tasks.executor_id != :executor_id'])
-                ->bind(':author_id', $userId, 'integer')
-                ->bind(':executor_id', $userId, 'integer')
-            ;
-            foreach ($forbiddenTasks as $forbiddenTask) {
-                $this->get($editUrl.$forbiddenTask->id);
-                $this->assertResponseCode(403);
-                $this->assertResponseContains('Forbidden');
             }
         }
     }
@@ -157,27 +152,24 @@ class TasksControllerTest extends TestCase
     {
         $deleteUrl = '/tasks/delete/';
 
-        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
         $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
         $users = $usersTable->find();
         $this->enableCsrfToken();
         $this->enableSecurityToken();
-        foreach ($users as $user){
+        foreach ($users as $user) {
             $userId = $user->id;
             $this->login($userId);
-
-            $allowedTasks = $tasksTable->find()->where(['author_id' => $userId]);
-            foreach ($allowedTasks as $allowedTask) {
-                $this->delete($deleteUrl.$allowedTask->id);
-                $this->assertResponseSuccess();
-                $this->assertRedirect('/tasks');
-            }
-
-            $forbiddenTasks = $tasksTable->find()->where(['NOT' => ['author_id' => $userId]]);
-            foreach ($forbiddenTasks as $forbiddenTask) {
-                $this->delete($deleteUrl.$forbiddenTask->id);
-                $this->assertResponseCode(403);
-                $this->assertResponseContains('Forbidden');
+            $tasks = $tasksTable->find();
+            foreach ($tasks as $task) {
+                $this->delete($deleteUrl . $task->id);
+                if ($task->author_id === $userId) {
+                    $this->assertResponseSuccess();
+                    $this->assertRedirect('/tasks');
+                } else {
+                    $this->assertResponseCode(403);
+                    $this->assertResponseContains('Forbidden');
+                }
             }
         }
     }
