@@ -18,7 +18,9 @@
 
 </head>
 <body>
+<?php if ($this->Identity->isLoggedIn()): ?>
     <?= $this->element('navigation') ?>
+<?php endif;?>
     <div class="container">
         <div class="row">
             <div class="col-md-12">

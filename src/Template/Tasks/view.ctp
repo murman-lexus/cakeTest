@@ -33,7 +33,7 @@
         </tr>
         <tr>
             <th scope="row"><?= __('Executor Id') ?></th>
-            <td><?= h($task->executor->_getFullname()) ?></td>
+            <td><?= $task->has('executor') ? h($task->executor->fullname) : '' ?></td>
         </tr>
         <tr>
             <th scope="row"><?= __('Created At') ?></th>

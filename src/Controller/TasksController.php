@@ -20,8 +20,6 @@ class TasksController extends AppController
      */
     public function index()
     {
-        $user = $this->Authentication->getIdentity()->getOriginalData();
-
         $this->paginate = [
             'limit' => 5,
             'contain' => [
@@ -33,13 +31,14 @@ class TasksController extends AppController
             'sortWhitelist' => [
                 'Types.label', 'created_at'
             ],
+            'order'=>[
+                'Types.label'=>'ASC',
+                'created_at'=>'ASC'
+            ]
         ];
 
-        if (empty($this->request->getQuery('sort'))){
-            $this->paginate['finder'] = 'sorted';
-        }
         $tasks = $this->paginate($this->Tasks);
-        $this->set(compact('tasks', 'user'));
+        $this->set(compact('tasks'));
     }
 
     /**
@@ -102,9 +101,9 @@ class TasksController extends AppController
         $task = $this->Tasks->get($id, [
             'contain' => ['Statuses'],
         ]);
-        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $user = $this->Authentication->getIdentity();
 
-        if (!$task->isAllowToEdit($user)){
+        if (!$task->isAllowToEdit($user->id)){
             throw new ForbiddenException();
         }
 
@@ -146,8 +145,8 @@ class TasksController extends AppController
         ]);
         $task = $this->Tasks->get($id);
 
-        $user = $this->Authentication->getIdentity()->getOriginalData();
-        if (!$task->isAllowToDelete($user)){
+        $user = $this->Authentication->getIdentity();
+        if (!$task->isAllowToDelete($user->id)){
             throw new ForbiddenException();
         }
 

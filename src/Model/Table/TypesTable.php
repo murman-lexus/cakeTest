@@ -30,7 +30,6 @@ class TypesTable extends Table
     {
         parent::initialize($config);
 
-        $this->setTable('types');
         $this->setDisplayField('id');
         $this->setPrimaryKey('id');
 

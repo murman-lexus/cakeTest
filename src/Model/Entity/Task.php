@@ -38,24 +38,22 @@ class Task extends Entity
         'description' => true,
         'comment' => true,
         'type_id' => true,
-        'author_id' => true,
+        'author_id' => false,
         'executor_id' => true,
         'status_id' => true,
-        'created_at' => true,
-        'updated_at' => true,
         'type' => true,
-        'author' => true,
+        'author' => false,
         'executor' => true,
         'status' => true,
     ];
 
-    public function isAllowToEdit(User $user)
+    public function isAllowToEdit(int $user_id)
     {
-        return $this->isAllowToDelete($user) || $user->id === $this->executor_id;
+        return $this->isAllowToDelete($user_id) || $user_id === $this->executor_id;
     }
 
-    public function isAllowToDelete(User $user)
+    public function isAllowToDelete(int $user_id)
     {
-        return $user->id === $this->author_id;
+        return $user_id === $this->author_id;
     }
 }

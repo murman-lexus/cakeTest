@@ -37,7 +37,8 @@ class TasksControllerTest extends TestCase
     {
         $addUrl = '/tasks/add';
 
-        $this->login();
+        $userId = 1;
+        $this->login($userId);
         $this->get($addUrl);
         $this->assertResponseOk();
         $data = [
@@ -54,8 +55,8 @@ class TasksControllerTest extends TestCase
         $this->post($addUrl, $data);
         $this->assertResponseSuccess();
         $this->assertRedirect('/tasks');
-        $articles = TableRegistry::getTableLocator()->get('Tasks');
-        $query = $articles->find()->where(['label' => $data['label']]);
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
+        $query = $tasksTable->find()->where(['label' => $data['label']]);
         $this->assertEquals(1, $query->count());
         /** @var $task Task */
         $task = $query->toArray()[0];
@@ -66,11 +67,11 @@ class TasksControllerTest extends TestCase
         }
 
         // проверим, что подставилась дата создания и обновления
-        $this->assertEquals($dateTime->format('Y-m-d H:i:s'), $task->created_at->format('Y-m-d H:i:s'));
-        $this->assertEquals($dateTime->format('Y-m-d H:i:s'), $task->updated_at->format('Y-m-d H:i:s'));
+        $this->assertGreaterThanOrEqual($dateTime->format('Y-m-d H:i:s'), $task->created_at->format('Y-m-d H:i:s'));
+        $this->assertGreaterThanOrEqual($dateTime->format('Y-m-d H:i:s'), $task->updated_at->format('Y-m-d H:i:s'));
 
         // проверим, что пользователь подставился как автор.
-        $this->assertEquals(1, $task->author_id, 'Incorrect Author autoselect');
+        $this->assertEquals($userId, $task->author_id, 'Incorrect Author autoselect');
     }
 
 
@@ -83,7 +84,6 @@ class TasksControllerTest extends TestCase
     public function testAddWithStatusExecutorValidation()
     {
         $addUrl = '/tasks/add';
-
         $this->login();
         $this->get($addUrl);
         $this->assertResponseOk();
@@ -98,8 +98,8 @@ class TasksControllerTest extends TestCase
         $this->post($addUrl, $data);
         $this->assertResponseSuccess();
         $this->assertNoRedirect();
-        $articles = TableRegistry::getTableLocator()->get('Tasks');
-        $query = $articles->find()->where(['label' => $data['label']]);
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
+        $query = $tasksTable->find()->where(['label' => $data['label']]);
         $this->assertEquals(0, $query->count());
 
         // добавим в данные исполнителя
@@ -108,18 +108,44 @@ class TasksControllerTest extends TestCase
         $this->post($addUrl, $data);
         $this->assertResponseSuccess();
         $this->assertRedirect('/tasks');
-        $query = $articles->find()->where(['label' => $data['label']]);
+        $query = $tasksTable->find()->where(['label' => $data['label']]);
         $this->assertEquals(1, $query->count());
     }
 
-        /**
+    /**
      * Test edit method
      *
      * @return void
      */
     public function testEdit()
     {
-        $this->markTestIncomplete('Not implemented yet.');
+        $editUrl = '/tasks/edit/';
+
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
+        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $users = $usersTable->find();
+
+        foreach ($users as $user){
+            $userId = $user->id;
+            $this->login($userId);
+
+            $allowedTasks = $tasksTable->find()->where(['OR' => [['author_id' => $userId], ['executor_id' => $userId]]]);
+            foreach ($allowedTasks as $allowedTask) {
+                $this->get($editUrl.$allowedTask->id);
+                $this->assertResponseOk();
+            }
+
+            $forbiddenTasks = $tasksTable->find()
+                ->where(['tasks.author_id != :author_id AND tasks.executor_id != :executor_id'])
+                ->bind(':author_id', $userId, 'integer')
+                ->bind(':executor_id', $userId, 'integer')
+            ;
+            foreach ($forbiddenTasks as $forbiddenTask) {
+                $this->get($editUrl.$forbiddenTask->id);
+                $this->assertResponseCode(403);
+                $this->assertResponseContains('Forbidden');
+            }
+        }
     }
 
     /**
@@ -129,9 +155,32 @@ class TasksControllerTest extends TestCase
      */
     public function testDelete()
     {
-        $this->markTestIncomplete('Not implemented yet.');
-    }
+        $deleteUrl = '/tasks/delete/';
 
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
+        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $users = $usersTable->find();
+        $this->enableCsrfToken();
+        $this->enableSecurityToken();
+        foreach ($users as $user){
+            $userId = $user->id;
+            $this->login($userId);
+
+            $allowedTasks = $tasksTable->find()->where(['author_id' => $userId]);
+            foreach ($allowedTasks as $allowedTask) {
+                $this->delete($deleteUrl.$allowedTask->id);
+                $this->assertResponseSuccess();
+                $this->assertRedirect('/tasks');
+            }
+
+            $forbiddenTasks = $tasksTable->find()->where(['NOT' => ['author_id' => $userId]]);
+            foreach ($forbiddenTasks as $forbiddenTask) {
+                $this->delete($deleteUrl.$forbiddenTask->id);
+                $this->assertResponseCode(403);
+                $this->assertResponseContains('Forbidden');
+            }
+        }
+    }
 
     protected function login($userId = 1)
     {
