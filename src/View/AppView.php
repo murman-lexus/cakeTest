@@ -36,5 +36,10 @@ class AppView extends View
      */
     public function initialize()
     {
+        $this->loadHelper('Form', [
+            'templates' => 'form_bootstrap',
+        ]);
+        $this->loadHelper('Flash');
+        $this->loadHelper('Authentication.Identity');
     }
 }
