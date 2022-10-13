@@ -14,7 +14,7 @@
             <tr>
                 <th scope="col"><?= __('id') ?></th>
                 <th scope="col"><?= __('label') ?></th>
-                <th scope="col"><?= __('type') ?></th>
+                <th scope="col"><?= $this->Paginator->sort('Types.label',__('Type')) ?></th>
                 <th scope="col"><?= __('status') ?></th>
                 <th scope="col"><?= __('author') ?></th>
                 <th scope="col"><?= __('executor') ?></th>

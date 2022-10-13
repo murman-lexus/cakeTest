@@ -30,7 +30,14 @@ class TasksController extends AppController
                 'Types',
                 'Statuses'
             ],
+            'sortWhitelist' => [
+                'Types.label', 'created_at'
+            ],
         ];
+
+        if (empty($this->request->getQuery('sort'))){
+            $this->paginate['finder'] = 'sorted';
+        }
         $tasks = $this->paginate($this->Tasks);
         $this->set(compact('tasks', 'user'));
     }

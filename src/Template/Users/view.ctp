@@ -25,7 +25,7 @@
         </tr>
     </table>
     <div class="related">
-        <h4><?= __('Related Tasks') ?></h4>
+        <h4><?= __('Execute Tasks') ?></h4>
         <?php if (!empty($user->execute_tasks)): ?>
         <table cellpadding="0" cellspacing="0">
             <tr>
@@ -64,7 +64,7 @@
         <?php endif; ?>
     </div>
     <div class="related">
-        <h4><?= __('Related Tasks') ?></h4>
+        <h4><?= __('Created Tasks') ?></h4>
         <?php if (!empty($user->authored_tasks)): ?>
         <table cellpadding="0" cellspacing="0">
             <tr>

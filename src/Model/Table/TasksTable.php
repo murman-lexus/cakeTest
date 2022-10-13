@@ -1,6 +1,7 @@
 <?php
 namespace App\Model\Table;
 
+use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -131,5 +132,11 @@ class TasksTable extends Table
             ]
         );
         return $rules;
+    }
+
+    public function findSorted(Query $query)
+    {
+
+        return $query->order(['Types.label' => 'ASC', 'created_at' => 'ASC']);
     }
 }
