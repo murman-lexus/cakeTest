@@ -34,9 +34,6 @@ class TasksTable extends Table
     {
         parent::initialize($config);
 
-        $this->setDisplayField('id');
-        $this->setPrimaryKey('id');
-
         $this->belongsTo('Types', [
             'foreignKey' => 'type_id',
             'joinType'   => 'INNER',

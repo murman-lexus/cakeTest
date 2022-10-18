@@ -51,8 +51,9 @@ class TasksControllerTest extends TestCase
         ];
         $this->enableCsrfToken();
         $this->enableSecurityToken();
+        $testNow = '2022-01-01 07:00:00';
+        FrozenTime::setTestNow($testNow);
 
-        $dateTime = new FrozenTime();
         $this->post($addUrl, $data);
         $this->assertResponseSuccess();
         $this->assertRedirect('/tasks');
@@ -68,8 +69,8 @@ class TasksControllerTest extends TestCase
         }
 
         // проверим, что подставилась дата создания и обновления
-        $this->assertGreaterThanOrEqual($dateTime->format('Y-m-d H:i:s'), $task->created_at->format('Y-m-d H:i:s'));
-        $this->assertGreaterThanOrEqual($dateTime->format('Y-m-d H:i:s'), $task->updated_at->format('Y-m-d H:i:s'));
+        $this->assertEquals($testNow, $task->created_at->toDateTimeString());
+        $this->assertEquals($testNow, $task->updated_at->toDateTimeString());
 
         // проверим, что пользователь подставился как автор.
         $this->assertEquals($userId, $task->author_id, 'Incorrect Author autoselect');
@@ -141,6 +142,45 @@ class TasksControllerTest extends TestCase
 
             }
         }
+    }
+
+    /**
+     * Test edit method
+     *
+     * @return void
+     */
+    public function testEditChangeAuthor()
+    {
+        $editUrl = '/tasks/edit/';
+
+        $userId = 1;
+        $this->login($userId);
+        $taskId = 1;
+
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
+        /** @var Task $oldTask */
+        $oldTask = $tasksTable->get($taskId);
+        $data = [
+            'label' => 'newlabel',
+            'author_id' => 2,
+        ];
+
+        $this->enableCsrfToken();
+        $this->enableSecurityToken();
+
+        $this->post($editUrl.$taskId, $data);
+        $this->assertResponseSuccess();
+
+        $this->assertRedirect('/tasks');
+        $this->getTableLocator()->clear();
+        /** @var $task Task */
+        $tasksTable = TableRegistry::getTableLocator()->get('Tasks');
+        $updatedTask = $tasksTable->get($taskId);
+
+        $this->assertEquals($data['label'], $updatedTask->label);
+        // проверим, что старое значение сохранилось
+        $this->assertEquals($oldTask->author_id, $updatedTask->author_id);
+        $this->assertNotEquals($data['author_id'], $updatedTask->author_id);
     }
 
     /**

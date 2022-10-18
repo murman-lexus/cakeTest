@@ -106,7 +106,6 @@ class TasksController extends AppController
         if (!$task->isAllowToEdit($user->id)){
             throw new ForbiddenException();
         }
-
         if ($this->request->is([
             'patch',
             'post',

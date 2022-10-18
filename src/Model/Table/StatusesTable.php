@@ -30,9 +30,6 @@ class StatusesTable extends Table
     {
         parent::initialize($config);
 
-        $this->setDisplayField('id');
-        $this->setPrimaryKey('id');
-
         $this->hasMany('Tasks', [
             'foreignKey' => 'status_id',
         ]);

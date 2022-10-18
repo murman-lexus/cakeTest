@@ -29,9 +29,6 @@ class UsersTable extends Table
     {
         parent::initialize($config);
 
-        $this->setDisplayField('id');
-        $this->setPrimaryKey('id');
-
         $this->hasMany('executeTasks',[
             'className' => 'Tasks',
             'foreignKey' => 'executor_id'

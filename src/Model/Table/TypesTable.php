@@ -30,9 +30,6 @@ class TypesTable extends Table
     {
         parent::initialize($config);
 
-        $this->setDisplayField('id');
-        $this->setPrimaryKey('id');
-
         $this->hasMany('Tasks', [
             'foreignKey' => 'type_id',
         ]);
